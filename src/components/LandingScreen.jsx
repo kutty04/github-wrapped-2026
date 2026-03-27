@@ -11,7 +11,8 @@ export default function LandingScreen({ onSubmit, loading, progress, error }) {
   }
 
   function handleOAuth() {
-    window.location.href = "http://localhost:3001/auth/github";
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3001";
+    window.location.href = `${backendUrl}/auth/github`;
   }
 
   return (

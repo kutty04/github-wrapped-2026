@@ -6,6 +6,11 @@ const cors = require('cors');
 const app = express();
 app.use(cors());
 
+// Health check for Render.com deployments
+app.get("/health", (req, res) => {
+  res.status(200).send("OK");
+});
+
 const CLIENT_ID = process.env.GITHUB_CLIENT_ID;
 const CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
