@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useGitHubData } from "./hooks/useGitHubData";
 import LandingScreen from "./components/LandingScreen";
 import WrappedViewer from "./components/WrappedViewer";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 export default function App() {
   const { status, progress, data, error, load } = useGitHubData();
@@ -41,7 +42,11 @@ export default function App() {
   }
 
   if (status === "success" && data) {
-    return <WrappedViewer data={data} onReset={handleReset} />;
+    return (
+      <ErrorBoundary>
+        <WrappedViewer data={data} onReset={handleReset} />
+      </ErrorBoundary>
+    );
   }
 
   return (

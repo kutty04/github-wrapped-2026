@@ -8,7 +8,7 @@ export async function fetchAIReview(data) {
 Given the stats below, generate a JSON response with EXACTLY these six keys:
 - "summary": A short, fun hype-summary of their programming year (2 sentences max).
 - "roast": A playful but savage roast based on these coding habits (e.g. coding strictly on weekends, tech stack choices).
-- "suggestions": 2-3 predictive recommendations for tech skills or languages to learn next year based on current stack.
+- "suggestions": A single plain text string (not an array) with 2-3 short recommendations for skills to learn next year, written as natural prose.
 - "personality": A developer personality diagnosis title (e.g. "The Open-Source Ninja", "The Midnight Debugger").
 - "commitAnalysis": A short, funny psychological evaluation based EXCLUSIVELY on reading their actual raw commit messages (e.g. "You used the word 'fix' 47 times. You sound violently stressed.").
 - "projectIdeas": An array of exactly 3 highly tailored, creative side-project architecture ideas they should build next year based strictly on analyzing their top programming languages and code patterns. Each item must have a "title" string and a detailed "desc" string.

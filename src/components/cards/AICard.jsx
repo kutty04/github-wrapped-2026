@@ -6,6 +6,15 @@ export default function AICard({ data }) {
 
   const ai = data.ai;
 
+  // Safely serialize any field that Groq might return as an object/array instead of a string
+  function safeText(val) {
+    if (!val) return "";
+    if (typeof val === "string") return val;
+    if (Array.isArray(val)) return val.map(v => typeof v === "object" ? Object.values(v).join(" — ") : String(v)).join(" · ");
+    if (typeof val === "object") return Object.values(val).join(" — ");
+    return String(val);
+  }
+
   if (!ai) {
     return (
       <div style={s.card}>
@@ -52,7 +61,7 @@ export default function AICard({ data }) {
           {/* Suggestions */}
           <div style={{...s.box, background: "rgba(74, 222, 128, 0.05)", borderColor: "rgba(74, 222, 128, 0.15)"}}>
              <span style={s.boxIcon}>💡</span>
-             <p style={{...s.boxText, color: "#86efac"}}>{ai.suggestions}</p>
+             <p style={{...s.boxText, color: "#86efac"}}>{safeText(ai.suggestions)}</p>
           </div>
         </div>
       </div>

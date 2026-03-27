@@ -1,116 +1,136 @@
 import { useEffect, useState } from "react";
 
 export default function CollaborationGraphCard({ data }) {
-  const [nodes, setNodes] = useState([]);
+  const [peers, setPeers] = useState([]);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => setVisible(true), 50);
+    const t = setTimeout(() => setVisible(true), 100);
     return () => clearTimeout(t);
   }, []);
 
   useEffect(() => {
-    // Generate initial center node
-    const network = [
-      { id: "center", type: "user", label: `@${data.profile.login}`, avatar: data.profile.avatar, x: 50, y: 50, size: 64, pulse: true }
-    ];
-
-    // Add top repos as inner satellite nodes
-    const repos = data.topRepos.slice(0, 4);
-    repos.forEach((r, i) => {
-      const angle = (i / repos.length) * Math.PI * 2;
-      const radius = 22; // inner ring %
-      network.push({
-        id: r.name, type: "repo", label: r.name, size: 36,
-        x: 50 + Math.cos(angle) * (radius * 0.7), // aspect ratio correction
-        y: 50 + Math.sin(angle) * radius
-      });
-    });
-
-    // Attempt to pull network from Nemesis card cache or dynamically fetch real-time peers
-    const storedFollowers = sessionStorage.getItem(`net_${data.profile.login}`);
-    if (storedFollowers) {
-      const peers = JSON.parse(storedFollowers).slice(0, 6);
-      peers.forEach((p, i) => {
-        const angle = (i / peers.length) * Math.PI * 2 + (Math.PI / 4);
-        const radius = 40; // outer ring %
-        network.push({
-           id: p.login, type: "peer", label: `@${p.login}`, avatar: p.avatar_url, size: 44,
-           x: 50 + Math.cos(angle) * (radius * 0.7),
-           y: 50 + Math.sin(angle) * radius
-        });
-      });
-      setNodes(network);
+    const cached = sessionStorage.getItem(`net_${data.profile.login}`);
+    if (cached) {
+      setPeers(JSON.parse(cached).slice(0, 8));
     } else {
-      fetch(`https://api.github.com/users/${data.profile.login}/followers?per_page=6`)
+      fetch(`https://api.github.com/users/${data.profile.login}/followers?per_page=8`)
         .then(r => r.json())
-        .then(peers => {
-           if (!Array.isArray(peers)) return;
-           sessionStorage.setItem(`net_${data.profile.login}`, JSON.stringify(peers));
-           const freshNetwork = [...network];
-           peers.forEach((p, i) => {
-              const angle = (i / peers.length) * Math.PI * 2 + (Math.PI / 4);
-              const radius = 40;
-              freshNetwork.push({
-                 id: p.login, type: "peer", label: `@${p.login}`, avatar: p.avatar_url, size: 44,
-                 x: 50 + Math.cos(angle) * (radius * 0.7),
-                 y: 50 + Math.sin(angle) * radius
-              });
-           });
-           setNodes(freshNetwork);
-        }).catch(() => setNodes(network));
+        .then(list => {
+          if (!Array.isArray(list)) return;
+          sessionStorage.setItem(`net_${data.profile.login}`, JSON.stringify(list));
+          setPeers(list.slice(0, 8));
+        })
+        .catch(() => {});
     }
-  }, [data]);
+  }, [data.profile.login]);
+
+  const repos = (data.topRepos || []).slice(0, 4);
+  const W = 900, H = 460;
+  const cx = W / 2, cy = H / 2;
+
+  // Compute repo nodes (inner ring)
+  const repoNodes = repos.map((r, i) => {
+    const angle = (i / repos.length) * Math.PI * 2 - Math.PI / 2;
+    return { ...r, x: cx + Math.cos(angle) * 140, y: cy + Math.sin(angle) * 140, type: "repo" };
+  });
+
+  // Compute peer nodes (outer ring)
+  const peerNodes = peers.map((p, i) => {
+    const angle = (i / Math.max(peers.length, 1)) * Math.PI * 2 - Math.PI / 2;
+    return { ...p, x: cx + Math.cos(angle) * 240, y: cy + Math.sin(angle) * 240, type: "peer" };
+  });
 
   return (
     <div style={s.card}>
-      <div style={s.dots} aria-hidden />
+      <div style={s.dots} />
+      <div style={s.radialGlow} />
 
-      <div style={{ ...s.inner, opacity: visible ? 1:0, transform: visible ? "scale(1)":"scale(0.95)", transition: "all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)" }}>
-         <div style={s.textHdr}>
-           <p style={s.eyebrow}>Social Topography</p>
-           <h2 style={s.title}>The Collaboration Graph</h2>
-         </div>
-         
-         <div style={s.graphWrap}>
-            {/* Physical SVG structural bindings linking the constellation network */}
-            <svg style={s.svgLayer}>
-               {nodes.filter(n => n.id !== "center").map(n => (
-                  <line key={`line-${n.id}`} x1="50%" y1="50%" x2={`${n.x}%`} y2={`${n.y}%`} stroke={n.type === "repo" ? "rgba(168, 85, 247, 0.4)" : "rgba(56, 189, 248, 0.25)"} strokeWidth="1.5" strokeDasharray={n.type === "repo" ? "0" : "4 4"} />
-               ))}
-               {/* Orbital planetary rings */}
-               <ellipse cx="50%" cy="50%" rx="15.4%" ry="22%" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
-               <ellipse cx="50%" cy="50%" rx="28%" ry="40%" fill="none" stroke="rgba(255,255,255,0.02)" strokeWidth="1" />
-            </svg>
+      <div style={{ ...s.inner, opacity: visible ? 1 : 0, transition: "opacity 1s ease" }}>
+        <p style={s.eyebrow}>Social Topography</p>
+        <h2 style={s.title}>The Collaboration Graph</h2>
 
-            {/* Mathematical DOM nodes calculating vector projection explicitly onto canvas block */}
-            {nodes.map(n => (
-               <div key={n.id} style={{ ...s.node, left: `${n.x}%`, top: `${n.y}%`, width: n.size, height: n.size, margin: -n.size/2,
-                  background: n.type === "repo" ? "rgba(168, 85, 247, 0.15)" : "#000",
-                  border: n.type === "center" ? "2px solid #fff" : n.type === "repo" ? "1px solid #a855f7" : "1px solid rgba(56, 189, 248, 0.5)",
-                  boxShadow: n.pulse ? "0 0 24px rgba(255,255,255,0.2)" : "0 4px 12px rgba(0,0,0,0.5)"
-               }}>
-                  {n.avatar ? <img src={n.avatar} alt={n.id} style={s.nodeImg} /> : <span style={s.repoIcon}>📂</span>}
-                  <span style={s.nodeLabel}>{n.label}</span>
-               </div>
+        <div style={s.canvasWrap}>
+          <svg viewBox={`0 0 ${W} ${H}`} style={s.svg} xmlns="http://www.w3.org/2000/svg">
+            {/* Orbital rings */}
+            <ellipse cx={cx} cy={cy} rx={140} ry={140} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+            <ellipse cx={cx} cy={cy} rx={240} ry={240} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="1" />
+
+            {/* Lines to repos */}
+            {repoNodes.map((r, i) => (
+              <line key={`rl-${i}`} x1={cx} y1={cy} x2={r.x} y2={r.y}
+                stroke="rgba(168,85,247,0.4)" strokeWidth="1.5" />
             ))}
-         </div>
+
+            {/* Lines to peers */}
+            {peerNodes.map((p, i) => (
+              <line key={`pl-${i}`} x1={cx} y1={cy} x2={p.x} y2={p.y}
+                stroke="rgba(56,189,248,0.2)" strokeWidth="1" strokeDasharray="4 4" />
+            ))}
+
+            {/* Center glow */}
+            <circle cx={cx} cy={cy} r={50} fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" />
+            <circle cx={cx} cy={cy} r={38} fill="rgba(74,222,128,0.08)" />
+
+            {/* Repo nodes */}
+            {repoNodes.map((r, i) => (
+              <g key={`rn-${i}`}>
+                <circle cx={r.x} cy={r.y} r={22} fill="rgba(168,85,247,0.12)" stroke="#a855f7" strokeWidth="1.5" />
+                <text x={r.x} y={r.y + 4} textAnchor="middle" fill="#c4b5fd" fontSize="10" fontFamily="monospace">📂</text>
+                <text x={r.x} y={r.y + 36} textAnchor="middle" fill="rgba(255,255,255,0.6)" fontSize="9" fontFamily="monospace">
+                  {r.name?.length > 12 ? r.name.slice(0, 12) + "…" : r.name}
+                </text>
+              </g>
+            ))}
+
+            {/* Peer nodes */}
+            {peerNodes.map((p, i) => (
+              <g key={`pn-${i}`}>
+                <circle cx={p.x} cy={p.y} r={18} fill="#060913" stroke="rgba(56,189,248,0.5)" strokeWidth="1.5" />
+                {/* Peer avatar via foreignObject */}
+                <image href={p.avatar_url} x={p.x - 16} y={p.y - 16} width={32} height={32}
+                  clipPath={`url(#clip-${i})`} />
+                <defs>
+                  <clipPath id={`clip-${i}`}>
+                    <circle cx={p.x} cy={p.y} r={16} />
+                  </clipPath>
+                </defs>
+                <text x={p.x} y={p.y + 30} textAnchor="middle" fill="rgba(255,255,255,0.5)" fontSize="9" fontFamily="monospace">
+                  @{p.login?.length > 10 ? p.login.slice(0, 10) + "…" : p.login}
+                </text>
+              </g>
+            ))}
+          </svg>
+
+          {/* Center avatar (overlaid via absolute) */}
+          <div style={s.centerAvi}>
+            <img src={data.profile.avatar} alt={data.profile.login} style={s.centerImg} />
+            <span style={s.centerLabel}>@{data.profile.login}</span>
+          </div>
+        </div>
+
+        <div style={s.legend}>
+          <span style={s.legendItem}><span style={{ color: "#a855f7" }}>●</span> Repos</span>
+          <span style={s.legendItem}><span style={{ color: "#38bdf8" }}>●</span> Followers</span>
+          <span style={s.legendItem}><span style={{ color: "#4ade80" }}>●</span> You</span>
+        </div>
       </div>
     </div>
   );
 }
 
 const s = {
-  card: { width: "100%", maxWidth: "100%", gridColumn: "1 / -1", height: 500, background: "#060913", border: "1px solid rgba(56, 189, 248, 0.2)", borderRadius: 24, padding: "24px", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" },
-  dots: { position: "absolute", inset: 0, backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px)", backgroundSize: "30px 30px" },
-  inner: { position: "relative", zIndex: 1, flex: 1, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" },
-  textHdr: { pointerEvents: "none" },
-  eyebrow: { margin: "0 0 8px", fontSize: 13, color: "#38bdf8", fontFamily: "'DM Mono', monospace", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 800 },
-  title: { margin: "0 0 16px", fontSize: 32, color: "#fff", fontFamily: "'Syne', sans-serif", fontWeight: 800, letterSpacing: "-0.02em" },
-  graphWrap: { flex: 1, width: "100%", position: "relative", marginTop: "auto", overflow: "visible" },
-  svgLayer: { position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" },
-  node: { position: "absolute", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.4s ease", zIndex: 10, cursor: "pointer" },
-  nodeImg: { width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover", pointerEvents: "none" },
-  repoIcon: { fontSize: 16, filter: "grayscale(1) brightness(2)" },
-  nodeLabel: { position: "absolute", bottom: -28, fontSize: 11, color: "rgba(255,255,255,0.8)", fontFamily: "'DM Mono', monospace", whiteSpace: "nowrap", background: "rgba(0,0,0,0.8)", padding: "4px 8px", borderRadius: 4, backdropFilter: "blur(4px)", border: "1px solid rgba(255,255,255,0.1)", pointerEvents: "none" }
+  card: { width: "100%", height: 580, background: "#060913", border: "1px solid rgba(56,189,248,0.2)", borderRadius: 24, padding: "24px 24px 16px", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" },
+  dots: { position: "absolute", inset: 0, backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.025) 1px, transparent 1px)", backgroundSize: "28px 28px", pointerEvents: "none" },
+  radialGlow: { position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 60%, rgba(56,189,248,0.06) 0%, transparent 65%)", pointerEvents: "none" },
+  inner: { position: "relative", zIndex: 1, flex: 1, display: "flex", flexDirection: "column" },
+  eyebrow: { margin: "0 0 6px", fontSize: 12, color: "#38bdf8", fontFamily: "'DM Mono', monospace", textTransform: "uppercase", letterSpacing: "0.15em", fontWeight: 800, textAlign: "center" },
+  title: { margin: "0 0 12px", fontSize: 28, color: "#fff", fontFamily: "'Syne', sans-serif", fontWeight: 800, letterSpacing: "-0.02em", textAlign: "center" },
+  canvasWrap: { flex: 1, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" },
+  svg: { width: "100%", height: "100%", maxHeight: 440 },
+  centerAvi: { position: "absolute", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, pointerEvents: "none" },
+  centerImg: { width: 60, height: 60, borderRadius: "50%", border: "2.5px solid rgba(255,255,255,0.9)", boxShadow: "0 0 32px rgba(74,222,128,0.4)" },
+  centerLabel: { fontSize: 11, color: "#4ade80", fontFamily: "'DM Mono', monospace", fontWeight: 700 },
+  legend: { display: "flex", gap: 20, justifyContent: "center", paddingTop: 8 },
+  legendItem: { fontSize: 11, color: "rgba(255,255,255,0.4)", fontFamily: "'DM Mono', monospace", display: "flex", alignItems: "center", gap: 6 }
 };
