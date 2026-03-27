@@ -1,9 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function LandingScreen({ onSubmit, loading, progress, error }) {
   const [username, setUsername] = useState("");
   const [token, setToken] = useState(sessionStorage.getItem("gh_token") || "");
   const [year, setYear] = useState(new Date().getFullYear());
+  const [backendReady, setBackendReady] = useState(false);
+
+  useEffect(() => {
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:3001";
+    const wakeBackend = async () => {
+      try {
+        await fetch(`${backendUrl}/health`);
+        setBackendReady(true);
+      } catch {
+        setTimeout(wakeBackend, 3000);
+      }
+    };
+    wakeBackend();
+  }, []);
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -66,9 +80,15 @@ export default function LandingScreen({ onSubmit, loading, progress, error }) {
           </div>
 
           {!token && (
-             <button type="button" onClick={handleOAuth} style={styles.oauthBtn}>
-               Log in with GitHub (Recommended)
-             </button>
+             backendReady ? (
+               <button type="button" onClick={handleOAuth} style={styles.oauthBtn}>
+                 Log in with GitHub (Recommended)
+               </button>
+             ) : (
+               <button type="button" disabled style={{ ...styles.oauthBtn, opacity: 0.5, cursor: "wait", background: "transparent", border: "1px dashed rgba(255,255,255,0.2)" }}>
+                 ☕ Waking up secure login server...
+               </button>
+             )
           )}
 
           {loading ? (
