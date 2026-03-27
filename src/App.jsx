@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import { useGitHubData } from "./hooks/useGitHubData";
 import LandingScreen from "./components/LandingScreen";
 import WrappedViewer from "./components/WrappedViewer";
@@ -41,15 +42,23 @@ export default function App() {
   }
 
   if (status === "success" && data) {
-    return <WrappedViewer data={data} onReset={handleReset} />;
+    return (
+      <>
+        <WrappedViewer data={data} onReset={handleReset} />
+        <Analytics />
+      </>
+    );
   }
 
   return (
-    <LandingScreen
-      onSubmit={handleSubmit}
-      loading={status === "loading"}
-      progress={progress}
-      error={error}
-    />
+    <>
+      <LandingScreen
+        onSubmit={handleSubmit}
+        loading={status === "loading"}
+        progress={progress}
+        error={error}
+      />
+      <Analytics />
+    </>
   );
 }
