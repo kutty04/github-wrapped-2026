@@ -59,8 +59,7 @@ export default function CollaborationGraphCard({ data }) {
   return (
     <div style={{
       ...s.card,
-      height: isMobile ? "auto" : 620,
-      minHeight: isMobile ? 480 : 620,
+      minHeight: isMobile ? 500 : 640,
     }}>
       <div style={s.dotGrid} />
       <div style={s.spaceBg} />
@@ -80,11 +79,11 @@ export default function CollaborationGraphCard({ data }) {
           </div>
         </div>
 
-        {/* Square SVG — scales evenly on any screen */}
+        {/* Square SVG — aspect-ratio:1 guarantees it scales as a square on any screen */}
         <div style={s.canvasWrap}>
           <svg
             viewBox={`0 0 ${SIZE} ${SIZE}`}
-            style={{ width: "100%", height: "100%", maxHeight: isMobile ? 380 : 500, maxWidth: isMobile ? 380 : 560 }}
+            style={{ width: "100%", aspectRatio: "1", display: "block", maxWidth: isMobile ? "100%" : 560 }}
             xmlns="http://www.w3.org/2000/svg"
           >
             <defs>
@@ -233,8 +232,9 @@ const s = {
     fontFamily: "'DM Mono', monospace", display: "flex", alignItems: "center", gap: 5, whiteSpace: "nowrap",
   },
   canvasWrap: {
-    flex: 1, position: "relative",
+    position: "relative",
     display: "flex", alignItems: "center", justifyContent: "center",
+    padding: "8px 0",
   },
   centerAvi: {
     position: "absolute", display: "flex", flexDirection: "column",
