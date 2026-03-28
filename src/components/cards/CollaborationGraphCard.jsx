@@ -1,26 +1,25 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 
 export default function CollaborationGraphCard({ data }) {
   const [peers, setPeers] = useState([]);
   const [visible, setVisible] = useState(false);
-  const [particles, setParticles] = useState([]);
-  const animRef = useRef(null);
-  const tickRef = useRef(0);
+  const [isMobile, setIsMobile] = useState(false);
+  const [particles] = useState(() =>
+    Array.from({ length: 35 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      r: Math.random() * 1.4 + 0.3,
+      opacity: Math.random() * 0.45 + 0.08,
+    }))
+  );
 
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 150);
-    // Generate random star particles
-    setParticles(
-      Array.from({ length: 40 }, (_, i) => ({
-        id: i,
-        x: Math.random() * 100,
-        y: Math.random() * 100,
-        r: Math.random() * 1.5 + 0.3,
-        opacity: Math.random() * 0.5 + 0.1,
-        speed: Math.random() * 0.4 + 0.1,
-      }))
-    );
-    return () => clearTimeout(t);
+    const check = () => setIsMobile(window.innerWidth < 700);
+    check();
+    window.addEventListener("resize", check);
+    return () => { clearTimeout(t); window.removeEventListener("resize", check); };
   }, []);
 
   useEffect(() => {
@@ -40,12 +39,15 @@ export default function CollaborationGraphCard({ data }) {
   }, [data.profile.login]);
 
   const repos = (data.topRepos || []).slice(0, 4);
-  const W = 1000, H = 500;
-  const cx = W / 2, cy = H / 2;
-  const innerR = 150, outerR = 260;
+
+  // Square viewBox — works perfectly on both mobile and desktop
+  const SIZE = 600;
+  const cx = SIZE / 2, cy = SIZE / 2;
+  const innerR = isMobile ? 110 : 130;
+  const outerR = isMobile ? 210 : 240;
 
   const repoNodes = repos.map((r, i) => {
-    const angle = (i / repos.length) * Math.PI * 2 - Math.PI / 2;
+    const angle = (i / Math.max(repos.length, 1)) * Math.PI * 2 - Math.PI / 2;
     return { ...r, x: cx + Math.cos(angle) * innerR, y: cy + Math.sin(angle) * innerR };
   });
 
@@ -54,28 +56,23 @@ export default function CollaborationGraphCard({ data }) {
     return { ...p, x: cx + Math.cos(angle) * outerR, y: cy + Math.sin(angle) * outerR };
   });
 
-  const gradientId = "centerGrad";
-  const glowId = "centerGlow";
-
   return (
-    <div style={s.card}>
-      {/* Animated dot grid */}
+    <div style={{
+      ...s.card,
+      height: isMobile ? "auto" : 620,
+      minHeight: isMobile ? 480 : 620,
+    }}>
       <div style={s.dotGrid} />
-
-      {/* Deep space radial glow */}
       <div style={s.spaceBg} />
-
-      {/* Top accent line */}
       <div style={s.accentLine} />
 
       <div style={{ ...s.inner, opacity: visible ? 1 : 0, transform: visible ? "scale(1)" : "scale(0.97)", transition: "opacity 0.8s ease, transform 0.8s ease" }}>
 
-        {/* Header */}
+        {/* Compact header for all screen sizes */}
         <div style={s.header}>
-          <span style={s.pill}>✦ Live Network</span>
-          <div style={s.titleGroup}>
+          <div>
             <p style={s.eyebrow}>Social Topography</p>
-            <h2 style={s.title}>The Collaboration Graph</h2>
+            <h2 style={{ ...s.title, fontSize: isMobile ? 20 : 26 }}>The Collaboration Graph</h2>
           </div>
           <div style={s.stats}>
             <div style={s.statChip}><span style={{ color: "#a855f7" }}>◆</span> {repos.length} Repos</div>
@@ -83,154 +80,115 @@ export default function CollaborationGraphCard({ data }) {
           </div>
         </div>
 
-        {/* SVG Canvas */}
+        {/* Square SVG — scales evenly on any screen */}
         <div style={s.canvasWrap}>
-          <svg viewBox={`0 0 ${W} ${H}`} style={s.svg} xmlns="http://www.w3.org/2000/svg">
+          <svg
+            viewBox={`0 0 ${SIZE} ${SIZE}`}
+            style={{ width: "100%", height: "100%", maxHeight: isMobile ? 380 : 500, maxWidth: isMobile ? 380 : 560 }}
+            xmlns="http://www.w3.org/2000/svg"
+          >
             <defs>
-              {/* Center gradient */}
-              <radialGradient id={gradientId} cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#4ade80" stopOpacity="0.25" />
+              <radialGradient id="cg" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#4ade80" stopOpacity="0.22" />
                 <stop offset="100%" stopColor="#4ade80" stopOpacity="0" />
               </radialGradient>
-              {/* Glow filter */}
-              <filter id={glowId} x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="6" result="blur" />
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="5" result="blur" />
                 <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
               </filter>
-              <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+              <filter id="softGlow">
                 <feGaussianBlur stdDeviation="3" result="blur" />
                 <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
               </filter>
-              {/* Peer clip paths */}
-              {peerNodes.map((_, i) => (
-                <clipPath key={`clip-${i}`} id={`clip-${i}`}>
-                  <circle cx={peerNodes[i].x} cy={peerNodes[i].y} r={19} />
+              {peerNodes.map((p, i) => (
+                <clipPath key={`cp-${i}`} id={`cp-${i}`}>
+                  <circle cx={p.x} cy={p.y} r={18} />
                 </clipPath>
               ))}
             </defs>
 
             {/* Star particles */}
             {particles.map(p => (
-              <circle key={p.id}
-                cx={`${p.x}%`} cy={`${p.y}%`}
-                r={p.r} fill="white" opacity={p.opacity} />
+              <circle key={p.id} cx={`${p.x}%`} cy={`${p.y}%`} r={p.r} fill="white" opacity={p.opacity} />
             ))}
 
-            {/* Outer orbital ring */}
-            <circle cx={cx} cy={cy} r={outerR}
-              fill="none" stroke="rgba(56,189,248,0.08)" strokeWidth="1"
-              strokeDasharray="3 8" />
+            {/* Orbital rings */}
+            <circle cx={cx} cy={cy} r={outerR} fill="none" stroke="rgba(56,189,248,0.09)" strokeWidth="1" strokeDasharray="3 9" />
+            <circle cx={cx} cy={cy} r={innerR} fill="none" stroke="rgba(168,85,247,0.13)" strokeWidth="1" strokeDasharray="2 6" />
 
-            {/* Inner orbital ring */}
-            <circle cx={cx} cy={cy} r={innerR}
-              fill="none" stroke="rgba(168,85,247,0.12)" strokeWidth="1"
-              strokeDasharray="2 6" />
-
-            {/* Outer glow rings */}
-            <circle cx={cx} cy={cy} r={outerR + 2}
-              fill="none" stroke="rgba(56,189,248,0.03)" strokeWidth="4" />
-            <circle cx={cx} cy={cy} r={innerR + 2}
-              fill="none" stroke="rgba(168,85,247,0.04)" strokeWidth="4" />
-
-            {/* Connection lines to peers */}
+            {/* Peer connection lines */}
             {peerNodes.map((p, i) => (
               <line key={`pl-${i}`} x1={cx} y1={cy} x2={p.x} y2={p.y}
-                stroke="url(#peerLine)" strokeWidth="1"
-                stroke="rgba(56,189,248,0.18)" strokeDasharray="5 6" />
+                stroke="rgba(56,189,248,0.18)" strokeWidth="1" strokeDasharray="5 7" />
             ))}
-
-            {/* Connection lines to repos */}
+            {/* Repo connection lines */}
             {repoNodes.map((r, i) => (
               <line key={`rl-${i}`} x1={cx} y1={cy} x2={r.x} y2={r.y}
                 stroke="rgba(168,85,247,0.5)" strokeWidth="1.5" />
             ))}
 
-            {/* Center radial glow */}
-            <circle cx={cx} cy={cy} r={80} fill={`url(#${gradientId})`} />
-
-            {/* Center ring */}
-            <circle cx={cx} cy={cy} r={52}
-              fill="rgba(6,9,19,0.8)" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5"
-              filter={`url(#${glowId})`} />
+            {/* Center glow area */}
+            <circle cx={cx} cy={cy} r={75} fill="url(#cg)" />
+            <circle cx={cx} cy={cy} r={50}
+              fill="rgba(6,9,19,0.85)" stroke="rgba(255,255,255,0.28)" strokeWidth="1.5"
+              filter="url(#glow)" />
 
             {/* Repo nodes */}
             {repoNodes.map((r, i) => (
               <g key={`rn-${i}`} filter="url(#softGlow)">
-                {/* Outer glow */}
-                <circle cx={r.x} cy={r.y} r={32} fill="rgba(168,85,247,0.06)" />
-                {/* Node circle */}
-                <circle cx={r.x} cy={r.y} r={24}
+                <circle cx={r.x} cy={r.y} r={30} fill="rgba(168,85,247,0.05)" />
+                <circle cx={r.x} cy={r.y} r={22}
                   fill="rgba(10,8,20,0.95)" stroke="#a855f7" strokeWidth="1.5" />
-                {/* Inner fill */}
-                <circle cx={r.x} cy={r.y} r={18} fill="rgba(168,85,247,0.1)" />
-                {/* Repo stars */}
-                <text x={r.x} y={r.y + 5} textAnchor="middle" fontSize="16">⭐</text>
-                {/* Label */}
-                <text x={r.x} y={r.y + 44} textAnchor="middle"
-                  fill="rgba(196,181,253,0.9)" fontSize="10" fontFamily="monospace" fontWeight="bold">
-                  {r.name?.length > 13 ? r.name.slice(0, 13) + "…" : r.name}
+                <circle cx={r.x} cy={r.y} r={16} fill="rgba(168,85,247,0.12)" />
+                <text x={r.x} y={r.y + 6} textAnchor="middle" fontSize="14">⭐</text>
+                <text x={r.x} y={r.y + 40} textAnchor="middle"
+                  fill="rgba(196,181,253,0.9)" fontSize={isMobile ? 9 : 10} fontFamily="monospace" fontWeight="bold">
+                  {(r.name || "").length > 11 ? r.name.slice(0, 11) + "…" : r.name}
                 </text>
-                {r.stars > 0 && (
-                  <text x={r.x} y={r.y + 57} textAnchor="middle"
-                    fill="rgba(255,255,255,0.3)" fontSize="9" fontFamily="monospace">
-                    ★ {r.stars}
-                  </text>
-                )}
               </g>
             ))}
 
             {/* Peer nodes */}
             {peerNodes.map((p, i) => (
               <g key={`pn-${i}`}>
-                {/* Outer glow */}
-                <circle cx={p.x} cy={p.y} r={28} fill="rgba(56,189,248,0.05)" />
-                {/* Border ring */}
-                <circle cx={p.x} cy={p.y} r={21}
-                  fill="none" stroke="rgba(56,189,248,0.4)" strokeWidth="1.5" />
-                {/* Avatar */}
-                <image href={p.avatar_url}
-                  x={p.x - 19} y={p.y - 19} width={38} height={38}
-                  clipPath={`url(#clip-${i})`} />
-                {/* Username */}
-                <text x={p.x} y={p.y + 36} textAnchor="middle"
-                  fill="rgba(148,226,255,0.7)" fontSize="9" fontFamily="monospace">
-                  @{p.login?.length > 9 ? p.login.slice(0, 9) + "…" : p.login}
+                <circle cx={p.x} cy={p.y} r={26} fill="rgba(56,189,248,0.05)" />
+                <circle cx={p.x} cy={p.y} r={20}
+                  fill="none" stroke="rgba(56,189,248,0.45)" strokeWidth="1.5" />
+                <image href={p.avatar_url} x={p.x - 18} y={p.y - 18} width={36} height={36}
+                  clipPath={`url(#cp-${i})`} />
+                <text x={p.x} y={p.y + 34} textAnchor="middle"
+                  fill="rgba(148,226,255,0.65)" fontSize={isMobile ? 8 : 9} fontFamily="monospace">
+                  @{(p.login || "").length > 8 ? p.login.slice(0, 8) + "…" : p.login}
                 </text>
               </g>
             ))}
-
-            {/* Empty state */}
-            {peers.length === 0 && repos.length === 0 && (
-              <text x={cx} y={cy + 90} textAnchor="middle"
-                fill="rgba(255,255,255,0.3)" fontSize="13" fontFamily="monospace">
-                No network data
-              </text>
-            )}
           </svg>
 
           {/* Center avatar overlay */}
-          <div style={s.centerAvi}>
-            <div style={s.centerRing}>
+          <div style={{ ...s.centerAvi, gap: isMobile ? 5 : 8 }}>
+            <div style={{ ...s.centerRing, width: isMobile ? 56 : 68, height: isMobile ? 56 : 68 }}>
               <img src={data.profile.avatar} alt={data.profile.login} style={s.centerImg} />
             </div>
-            <span style={s.centerLabel}>@{data.profile.login}</span>
+            <span style={{ ...s.centerLabel, fontSize: isMobile ? 10 : 11 }}>
+              @{data.profile.login}
+            </span>
           </div>
         </div>
 
         {/* Legend */}
         <div style={s.legend}>
           <div style={s.legendItem}>
-            <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ade80", display: "inline-block", boxShadow: "0 0 8px #4ade80" }} />
+            <span style={s.dot("#4ade80")} />
             You
           </div>
           <div style={s.legendSep} />
           <div style={s.legendItem}>
-            <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#a855f7", display: "inline-block", boxShadow: "0 0 8px #a855f7" }} />
-            Repositories
+            <span style={s.dot("#a855f7")} />
+            Repos
           </div>
           <div style={s.legendSep} />
           <div style={s.legendItem}>
-            <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#38bdf8", display: "inline-block", boxShadow: "0 0 8px #38bdf8" }} />
+            <span style={s.dot("#38bdf8")} />
             Followers
           </div>
         </div>
@@ -241,16 +199,16 @@ export default function CollaborationGraphCard({ data }) {
 
 const s = {
   card: {
-    width: "100%", height: 620,
+    width: "100%",
     background: "linear-gradient(160deg, #05080f 0%, #060913 40%, #060c18 100%)",
     border: "1px solid rgba(56,189,248,0.15)", borderRadius: 28,
-    padding: "28px 28px 20px", display: "flex", flexDirection: "column",
+    padding: "24px 24px 18px", display: "flex", flexDirection: "column",
     position: "relative", overflow: "hidden",
   },
   dotGrid: {
     position: "absolute", inset: 0,
     backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.02) 1px, transparent 1px)",
-    backgroundSize: "32px 32px", pointerEvents: "none",
+    backgroundSize: "30px 30px", pointerEvents: "none",
   },
   spaceBg: {
     position: "absolute", inset: 0,
@@ -258,52 +216,44 @@ const s = {
     pointerEvents: "none",
   },
   accentLine: {
-    position: "absolute", top: 0, left: "20%", right: "20%", height: 1,
+    position: "absolute", top: 0, left: "15%", right: "15%", height: 1,
     background: "linear-gradient(90deg, transparent, rgba(56,189,248,0.5), rgba(168,85,247,0.5), transparent)",
   },
   inner: { position: "relative", zIndex: 1, flex: 1, display: "flex", flexDirection: "column" },
-  header: { display: "flex", alignItems: "center", gap: 16, marginBottom: 12, flexWrap: "wrap" },
-  pill: {
-    fontSize: 10, color: "#38bdf8", background: "rgba(56,189,248,0.1)",
-    border: "1px solid rgba(56,189,248,0.25)", padding: "4px 10px", borderRadius: 99,
-    fontFamily: "'DM Mono', monospace", letterSpacing: "0.1em", whiteSpace: "nowrap",
-  },
-  titleGroup: { flex: 1 },
+  header: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, marginBottom: 8 },
   eyebrow: {
     margin: 0, fontSize: 11, color: "#38bdf8",
-    fontFamily: "'DM Mono', monospace", textTransform: "uppercase", letterSpacing: "0.18em", fontWeight: 800,
+    fontFamily: "'DM Mono', monospace", textTransform: "uppercase", letterSpacing: "0.16em", fontWeight: 800,
   },
-  title: {
-    margin: 0, fontSize: 26, color: "#fff",
-    fontFamily: "'Syne', sans-serif", fontWeight: 800, letterSpacing: "-0.02em",
-  },
-  stats: { display: "flex", gap: 8 },
+  title: { margin: "2px 0 0", color: "#fff", fontFamily: "'Syne', sans-serif", fontWeight: 800, letterSpacing: "-0.02em" },
+  stats: { display: "flex", gap: 6, flexShrink: 0 },
   statChip: {
     fontSize: 10, color: "rgba(255,255,255,0.5)", background: "rgba(255,255,255,0.04)",
-    border: "1px solid rgba(255,255,255,0.08)", padding: "4px 10px", borderRadius: 99,
-    fontFamily: "'DM Mono', monospace", display: "flex", alignItems: "center", gap: 5,
+    border: "1px solid rgba(255,255,255,0.08)", padding: "4px 9px", borderRadius: 99,
+    fontFamily: "'DM Mono', monospace", display: "flex", alignItems: "center", gap: 5, whiteSpace: "nowrap",
   },
-  canvasWrap: { flex: 1, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" },
-  svg: { width: "100%", height: "100%", maxHeight: 480 },
+  canvasWrap: {
+    flex: 1, position: "relative",
+    display: "flex", alignItems: "center", justifyContent: "center",
+  },
   centerAvi: {
     position: "absolute", display: "flex", flexDirection: "column",
-    alignItems: "center", gap: 8, pointerEvents: "none",
+    alignItems: "center", pointerEvents: "none",
   },
   centerRing: {
-    width: 68, height: 68, borderRadius: "50%",
-    border: "2px solid rgba(74,222,128,0.8)",
-    boxShadow: "0 0 24px rgba(74,222,128,0.5), 0 0 48px rgba(74,222,128,0.15), inset 0 0 12px rgba(74,222,128,0.1)",
+    borderRadius: "50%", border: "2px solid rgba(74,222,128,0.85)",
+    boxShadow: "0 0 20px rgba(74,222,128,0.45), 0 0 40px rgba(74,222,128,0.12)",
     overflow: "hidden",
   },
-  centerImg: { width: "100%", height: "100%", objectFit: "cover" },
+  centerImg: { width: "100%", height: "100%", objectFit: "cover", display: "block" },
   centerLabel: {
-    fontSize: 11, color: "#4ade80", fontFamily: "'DM Mono', monospace",
+    color: "#4ade80", fontFamily: "'DM Mono', monospace",
     fontWeight: 800, letterSpacing: "0.05em",
-    textShadow: "0 0 12px rgba(74,222,128,0.8)",
+    textShadow: "0 0 10px rgba(74,222,128,0.7)",
   },
   legend: {
     display: "flex", alignItems: "center", gap: 12,
-    justifyContent: "center", paddingTop: 10,
+    justifyContent: "center", paddingTop: 8,
   },
   legendItem: {
     display: "flex", alignItems: "center", gap: 6,
@@ -311,4 +261,9 @@ const s = {
     fontFamily: "'DM Mono', monospace",
   },
   legendSep: { width: 1, height: 12, background: "rgba(255,255,255,0.1)" },
+  dot: (color) => ({
+    width: 7, height: 7, borderRadius: "50%",
+    background: color, display: "inline-block",
+    boxShadow: `0 0 6px ${color}`,
+  }),
 };
