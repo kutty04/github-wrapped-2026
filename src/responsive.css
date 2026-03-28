@@ -1,0 +1,94 @@
+/* =============================================
+   GitHub Wrapped — Global Responsive Styles
+   ============================================= */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #root {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* ── Desktop 3-column bento grid ──────────── */
+.bento-grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 32px;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 1400px;
+  padding: 0 16px;
+  margin: 0 auto 80px;
+}
+
+.bento-col {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  flex: 1;
+  min-width: 280px;
+  max-width: 420px;
+}
+
+/* ── Tablet ────────────────────────────────── */
+@media (max-width: 900px) {
+  .bento-col {
+    min-width: 260px;
+    max-width: 48%;
+  }
+}
+
+/* ── Mobile: 1 column ─────────────────────── */
+@media (max-width: 600px) {
+  .bento-grid {
+    flex-direction: column;
+    gap: 20px;
+    padding: 0 12px;
+    align-items: stretch;
+    margin-bottom: 48px;
+  }
+  .bento-col {
+    width: 100%;
+    min-width: unset;
+    max-width: 100%;
+    gap: 20px;
+  }
+  /* Override all inline maxWidth on cards */
+  .bento-col > div {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+}
+
+/* ── Collab graph ──────────────────────────── */
+.collab-graph-wrap {
+  width: 100%;
+  max-width: 1400px;
+  margin: 40px auto 0;
+  padding: 0 16px;
+}
+.collab-graph-wrap > div {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+@media (max-width: 600px) {
+  .collab-graph-wrap {
+    padding: 0 12px;
+    margin-top: 20px;
+  }
+  .collab-graph-wrap > div {
+    height: 340px !important;
+  }
+}
+
+/* ── Touch-friendly buttons ─────────────────── */
+@media (max-width: 600px) {
+  button { min-height: 44px; }
+}
+
+/* ── Hide scrollbars globally ──────────────── */
+* { scrollbar-width: none; }
+*::-webkit-scrollbar { display: none; }

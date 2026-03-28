@@ -133,7 +133,7 @@ const styles = {
     fontFamily: "'DM Mono', 'Fira Mono', monospace",
     position: "relative",
     overflow: "hidden",
-    padding: "2rem",
+    padding: "2rem 1.25rem",
   },
   grid: {
     position: "absolute",
@@ -161,11 +161,11 @@ const styles = {
     marginBottom: "1.5rem",
   },
   headline: {
-    fontSize: "clamp(56px, 12vw, 96px)",
+    fontSize: "clamp(40px, 11vw, 96px)",
     fontWeight: 700,
     lineHeight: 0.9,
     color: "#ffffff",
-    margin: "0 0 1.5rem",
+    margin: "0 0 1.25rem",
     fontFamily: "'Syne', 'DM Mono', monospace",
     letterSpacing: "-0.03em",
   },

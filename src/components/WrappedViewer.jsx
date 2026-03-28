@@ -209,13 +209,13 @@ export default function WrappedViewer({ data, onReset }) {
          <span style={{ fontSize: 18 }}>↓</span>
       </div>
 
-      <div style={{ width: "100%", maxWidth: 1400, marginTop: 40, marginBottom: 32, padding: "0 16px" }}>
+      <div style={{ width: "100%", maxWidth: 1400, marginTop: 40, marginBottom: 32, padding: "0 16px", margin: "40px auto 32px" }} className="collab-graph-wrap">
          <CollaborationGraphCard data={data} />
       </div>
 
-      <div style={styles.gridSection}>
+      <div className="bento-grid">
          {/* Left Column: AI & Analysis */}
-         <div style={{ display: "flex", flexDirection: "column", gap: 32, flex: 1, minWidth: 280, maxWidth: 420 }}>
+         <div className="bento-col">
             <AICard data={data} />
             <ProjectIdeasCard data={data} />
             <CommitAnalyzerCard data={data} />
@@ -223,7 +223,7 @@ export default function WrappedViewer({ data, onReset }) {
          </div>
 
          {/* Center Column: Core Metrics & Projections */}
-         <div style={{ display: "flex", flexDirection: "column", gap: 32, flex: 1, minWidth: 280, maxWidth: 420 }}>
+         <div className="bento-col">
             <BentoCard data={data} />
             <YearComparisonCard data={data} />
             <PredictionCard data={data} />
@@ -231,7 +231,7 @@ export default function WrappedViewer({ data, onReset }) {
          </div>
 
          {/* Right Column: Viral & Personality */}
-         <div style={{ display: "flex", flexDirection: "column", gap: 32, flex: 1, minWidth: 280, maxWidth: 420 }}>
+         <div className="bento-col">
             <PersonalityCard data={data} />
             <CodeSmellCard data={data} />
             <NemesisCard data={data} />
@@ -261,7 +261,7 @@ const styles = {
   },
   topBar: {
     display: "flex", alignItems: "center", justifyContent: "space-between",
-    width: "100%", maxWidth: 420,
+    width: "100%", maxWidth: 480, padding: "0 8px",
   },
   ghostBtn: {
     background: "none", border: "none", color: "rgba(255,255,255,0.3)",
@@ -278,7 +278,7 @@ const styles = {
     height: 6, borderRadius: 99, border: "none", cursor: "pointer", padding: 0,
     transition: "width 0.3s ease, background 0.3s ease",
   },
-  cardWrap: { width: "100%", maxWidth: 420, overflow: "hidden", position: "relative" },
+  cardWrap: { width: "100%", maxWidth: 480, overflow: "hidden", position: "relative" },
   nav: { display: "flex", alignItems: "center", gap: 24 },
   navBtn: {
     background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
@@ -289,7 +289,7 @@ const styles = {
     fontSize: 12, color: "rgba(255,255,255,0.35)", letterSpacing: "0.1em",
     textTransform: "uppercase", minWidth: 80, textAlign: "center",
   },
-  shareRow: { display: "flex", alignItems: "center", gap: 12 },
+  shareRow: { display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", justifyContent: "center" },
   shareBtn: {
     display: "flex", alignItems: "center", gap: 6,
     background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.25)",
