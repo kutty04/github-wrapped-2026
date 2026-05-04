@@ -2,11 +2,16 @@ import { useState, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import SplashCard from "./cards/SplashCard";
 import CommitsCard from "./cards/CommitsCard";
+import LanguagesCard from "./cards/LanguagesCard";
 import BentoCard from "./cards/BentoCard";
 import StreakCard from "./cards/StreakCard";
 import HeatmapCard from "./cards/HeatmapCard";
 import PlaybackCard from "./cards/PlaybackCard";
 import BadgesCard from "./cards/BadgesCard";
+import ReposCard from "./cards/ReposCard";
+import PRsIssuesCard from "./cards/PRsIssuesCard";
+import TimeDayCard from "./cards/TimeDayCard";
+import CollaborationCard from "./cards/CollaborationCard";
 import AICard from "./cards/AICard";
 import RoastGeneratorCard from "./cards/RoastGeneratorCard";
 import TimeCapsuleCard from "./cards/TimeCapsuleCard";
@@ -31,13 +36,19 @@ async function downloadCard(ref, filename) {
   link.click();
 }
 
+
 const CARDS = [
-  { id: "splash",      label: "Welcome",        Component: SplashCard },
-  { id: "commits",     label: "Commits",        Component: CommitsCard },
-  { id: "heatmap",     label: "Activity",       Component: HeatmapCard },
-  { id: "playback",    label: "Timeline",       Component: PlaybackCard },
-  { id: "streak",      label: "Streak",         Component: StreakCard },
-  { id: "badges",      label: "Achievements",   Component: BadgesCard },
+  { id: "splash",       label: "Welcome",        Component: SplashCard },
+  { id: "commits",      label: "Commits",        Component: CommitsCard },
+  { id: "languages",    label: "Languages",      Component: LanguagesCard },
+  { id: "heatmap",      label: "Activity",       Component: HeatmapCard },
+  { id: "playback",     label: "Timeline",       Component: PlaybackCard },
+  { id: "streak",       label: "Streak",         Component: StreakCard },
+  { id: "repos",        label: "Top Repos",      Component: ReposCard },
+  { id: "prs",          label: "PRs & Issues",   Component: PRsIssuesCard },
+  { id: "timeday",      label: "Time & Day",     Component: TimeDayCard },
+  { id: "collab",       label: "Collaboration",  Component: CollaborationCard },
+  { id: "badges",       label: "Achievements",   Component: BadgesCard },
 ];
 
 const slideVariants = {
@@ -297,8 +308,6 @@ const styles = {
     fontFamily: "'DM Mono', monospace", padding: "6px 14px", borderRadius: 6, letterSpacing: "0.06em",
   },
   shareBtnIcon: { fontSize: 14, lineHeight: 1 },
-  shareUrl: { fontSize: 11, color: "rgba(255,255,255,0.2)", fontFamily: "'DM Mono', monospace" },
-  compareBtn: { marginTop: 24, padding: "12px 24px", background: "rgba(255,255,255,0.05)", color: "#fff", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 99, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: 13, letterSpacing: "0.04em", alignSelf: "center", display: "flex", gap: 6, alignItems: "center" },
   compareBtn: { marginTop: 24, padding: "12px 24px", background: "rgba(255,255,255,0.05)", color: "#fff", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 99, cursor: "pointer", fontFamily: "'DM Mono', monospace", fontSize: 13, letterSpacing: "0.04em", alignSelf: "center", display: "flex", gap: 6, alignItems: "center" },
   gridSection: { width: "100%", maxWidth: 1400, marginBottom: 80, display: "flex", flexDirection: "row", flexWrap: "wrap", gap: 32, justifyContent: "center", alignItems: "flex-start", position: "relative", zIndex: 1, padding: "0 16px" }
 };

@@ -30,6 +30,7 @@ function getCommitPersonality(count) {
 }
 
 export default function CommitsCard({ data }) {
+  const count = useCountUp(data.totalCommits);
   const personality = getCommitPersonality(data.totalCommits);
   const [visible, setVisible] = useState(false);
   const [taps, setTaps] = useState(0);
@@ -90,7 +91,7 @@ export default function CommitsCard({ data }) {
           <p style={s.eyebrow}>this year, you made</p>
           <div style={{ position: "relative" }}>
              <h1 onClick={handleTap} style={{...s.bigNumber, cursor: "pointer", userSelect: "none", display: "flex", alignItems: "center", justifyContent: "center", gap: 12}}>
-                {data.totalCommits.toLocaleString()}
+                {count.toLocaleString()}
                 {taps === 0 && !egg && <span style={{ fontSize: 24, animation: "pulseHint 2s infinite ease-in-out" }}>👆</span>}
              </h1>
              {taps > 0 && !egg && <span style={s.tapHint}>Tap {5 - taps} more times...</span>}

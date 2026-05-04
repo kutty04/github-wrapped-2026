@@ -6,16 +6,19 @@ export function processGitHubData(profile, repos, events, allLanguages, searchSt
   const year = targetYear || new Date().getFullYear();
 
   // ── 1. Commit count this year ──────────────────────────────────────────────
+  // Primary: GitHub Search API gives exact full-year commit count (no 90-day/300-event cap)
+  // Fallback: sum payload.size from PushEvents (capped but better than nothing)
   const pushEvents = events.filter((e) => {
     if (e.type !== "PushEvent") return false;
     const eventYear = new Date(e.created_at).getFullYear();
     return eventYear === year;
   });
-
-  const totalCommits = pushEvents.reduce(
-    (sum, e) => sum + (e.payload?.size ?? 0),
+  const eventsBasedCommits = pushEvents.reduce(
+    (sum, e) => sum + (e.payload?.size ?? e.payload?.commits?.length ?? 0),
     0
   );
+  // ✅ Use Search API total_count as it covers the entire year accurately
+  const totalCommits = searchStats?.thisYearCommits || eventsBasedCommits;
 
   // ── 2. Top languages ────────────────────────────────────────────────────────
   const langTotals = {};
@@ -151,7 +154,10 @@ export function processGitHubData(profile, repos, events, allLanguages, searchSt
   if (topLanguages.length >= 5) badges.push({ id: "polyglot", title: "Polyglot", desc: "Wrote code in 5+ languages", icon: "🌍" });
   if (totalStars >= 50) badges.push({ id: "stargazer", title: "Stargazer", desc: "Earned 50+ stars on your repos", icon: "⭐" });
   if (linesDeleted > linesAdded && linesDeleted > 1000) badges.push({ id: "deleter", title: "The Deleter", desc: "Deleted more code than you added", icon: "✂️" });
+  if (totalCommits >= 500) badges.push({ id: "commit_beast", title: "Commit Beast", desc: "500+ commits in a single year", icon: "💪" });
+  if (totalCommits >= 100 && totalCommits < 500) badges.push({ id: "grinder", title: "Daily Grinder", desc: "100+ commits this year", icon: "⚡" });
   if (badges.length === 0) badges.push({ id: "starter", title: "Journey Begun", desc: "Your first steps into the code verse", icon: "🚀" });
+
 
   // ── 13. Commits Extractor ───────────────────────────────────────────────────
   const recentCommits = [];

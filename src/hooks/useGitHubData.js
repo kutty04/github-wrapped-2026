@@ -53,7 +53,9 @@ export function useGitHubData() {
         issuesClosed: issuesClosed.total_count || 0,
         reviewComments: reviewComments.total_count || 0,
         firstCommitDate: firstCommitData.items?.[0]?.commit?.committer?.date || null,
-        lastYearCommits: lastYearCommitData.total_count || 0
+        lastYearCommits: lastYearCommitData.total_count || 0,
+        // ✅ The real full-year commit count from Search API (not limited to 300 events)
+        thisYearCommits: firstCommitData.total_count || 0,
       };
 
       // Fetch languages for top 10 non-fork repos to avoid too many requests
