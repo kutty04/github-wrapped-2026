@@ -22,11 +22,14 @@ function useCountUp(target, duration = 1800) {
 }
 
 function getCommitPersonality(count) {
-  if (count >= 1000) return { label: "Code machine", color: "#4ade80" };
-  if (count >= 500)  return { label: "Power committer", color: "#facc15" };
-  if (count >= 200)  return { label: "Consistent builder", color: "#60a5fa" };
-  if (count >= 50)   return { label: "Getting warmed up", color: "#f472b6" };
-  return               { label: "No public activity yet — your journey starts here 🚀", color: "#a78bfa" };
+  if (count >= 1000) return { label: "Code machine 🤖",        color: "#4ade80" };
+  if (count >= 500)  return { label: "Power committer ⚡",      color: "#facc15" };
+  if (count >= 200)  return { label: "Consistent builder 🏗️",  color: "#60a5fa" };
+  if (count >= 100)  return { label: "Getting warmed up 🔥",    color: "#f472b6" };
+  if (count >= 50)   return { label: "Building momentum 🚀",    color: "#fb923c" };
+  if (count >= 20)   return { label: "Just getting started 🌱", color: "#a78bfa" };
+  if (count >= 1)    return { label: "First steps taken 👣",    color: "#67e8f9" };
+  return                    { label: "No public activity yet",   color: "#6b7280" };
 }
 
 export default function CommitsCard({ data }) {
